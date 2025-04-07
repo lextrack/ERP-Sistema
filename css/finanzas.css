@@ -1,0 +1,181 @@
+.tab-content {
+    background-color: #2c3e50;
+    border-radius: 0 0 10px 10px;
+    padding: 20px;
+    margin-top: -1px;
+}
+
+.card-text{
+    font-size: large;
+}
+
+.card-title{
+    font-size: large;
+}
+
+.card-icon {
+    font-size: 2.0rem;
+    margin-bottom: 10px;
+}
+
+.nav-tabs .nav-link {
+    color: #dddddd;
+    border: none;
+    border-radius: 10px 10px 0 0;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #2c3e50;
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+
+.finance-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s;
+    height: 90%;
+    background-color: #34495e;
+}
+
+.finance-card:hover {
+    transform: translateY(-5px);
+}
+
+.chart-container {
+    height: 300px;
+    margin-top: 20px;
+}
+
+.ingreso-factura {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    border-left: 4px solid #198754 !important;
+}
+
+.ingreso-factura:hover {
+    background-color: rgba(25, 135, 84, 0.2) !important;
+}
+
+.factura-badge {
+    padding: 2px 5px;
+    font-size: 0.7em;
+    background-color: #198754;
+    color: white;
+    border-radius: 3px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.ingreso-factura .btn-secondary.disabled {
+    opacity: 0.6;
+    background-color: #6c757d;
+}
+
+.btn-factura-info {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    cursor: default;
+}
+
+.tooltip-factura {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip-factura .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip-factura:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.transaccion-revertida {
+    text-decoration: line-through;
+    opacity: 0.7;
+    background-color: rgba(108, 117, 125, 0.1) !important;
+}
+
+.transaccion-revertida:hover {
+    background-color: rgba(108, 117, 125, 0.2) !important;
+}
+
+.transaccion-de-reversion {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border-left: 3px solid #0dcaf0;
+}
+
+.transaccion-de-reversion:hover {
+    background-color: rgba(13, 202, 240, 0.2) !important;
+}
+
+.transaccion-factura {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    border-left: 3px solid #198754;
+}
+
+.transaccion-factura:hover {
+    background-color: rgba(25, 135, 84, 0.2) !important;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+#modalDetallesTransaccion .table {
+    margin-bottom: 0;
+}
+
+#modalDetallesTransaccion .table th,
+#modalDetallesTransaccion .table td {
+    padding: 0.75rem;
+    vertical-align: top;
+}
+
+.btn-sm {
+    transition: all 0.2s;
+}
+
+#btnNuevaFactura{
+    margin-bottom: 10px;
+}
+
+.tooltip-inner {
+    max-width: 200px;
+    padding: 0.5rem 1rem;
+    color: #fff;
+    text-align: center;
+    background-color: #000;
+    border-radius: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    #modalDetallesTransaccion .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+}

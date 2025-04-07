@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="description" content="ERP de código libre">
+    <meta name="author" content="Lextrack">
+    <title>Gestión de Clientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" 
+    integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="img/favicon.ico" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-dark text-white">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fa-solid fa-building me-2"></i>
+                <span>ERP Sistema</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="index.html">
+                            <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="inventario.html">
+                            <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active d-flex align-items-center" aria-current="page" href="clientes.html">
+                            <i class="fa-solid fa-users me-1"></i> Clientes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="finanzas.html">
+                            <i class="fa-solid fa-coins me-1"></i> Finanzas
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-2">
+        <h2 class="text-center mb-4">Gestión de Clientes</h2>
+        
+        <!-- Buscador y filtros -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="buscarCliente" placeholder="Buscar cliente...">
+                    <button class="btn btn-primary" type="button" id="btnBuscar">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-success w-100" id="btnNuevoCliente">
+                    <i class="fas fa-user-plus"></i> Nuevo Cliente
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tabla de clientes -->
+        <div class="table-responsive">
+            <table class="table table-dark table-bordered table-hover" id="tablaClientes">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>Última Compra</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los datos se cargarán con js -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Información de resultados y paginación para clientes -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <p class="text-white" id="infoResultadosClientes">Mostrando 10 de 0</p>
+            </div>
+            <div class="col-md-6">
+                <div id="paginacionClientes" class="d-flex justify-content-end"></div>
+            </div>
+        </div>
+        
+        <!-- Modal para Nuevo/Editar Cliente -->
+        <div class="modal fade" id="modalCliente" tabindex="-1" aria-labelledby="modalClienteLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="modalClienteLabel">Nuevo Cliente</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formCliente">
+                            <input type="hidden" id="clienteId">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="nombreCliente" class="form-label">Nombre completo</label>
+                                    <input type="text" class="form-control bg-secondary text-light border-dark" id="nombreCliente" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="emailCliente" class="form-label">Email</label>
+                                    <input type="email" class="form-control bg-secondary text-light border-dark" id="emailCliente">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="telefonoCliente" class="form-label">Teléfono</label>
+                                    <input type="tel" class="form-control bg-secondary text-light border-dark" id="telefonoCliente">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="rucCliente" class="form-label">RUC/DNI</label>
+                                    <input type="text" class="form-control bg-secondary text-light border-dark" id="rucCliente">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="direccionCliente" class="form-label">Dirección</label>
+                                <input type="text" class="form-control bg-secondary text-light border-dark" id="direccionCliente">
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="ciudadCliente" class="form-label">Ciudad</label>
+                                    <input type="text" class="form-control bg-secondary text-light border-dark" id="ciudadCliente">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="paisCliente" class="form-label">País</label>
+                                    <input type="text" class="form-control bg-secondary text-light border-dark" id="paisCliente">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notasCliente" class="form-label">Notas</label>
+                                <textarea class="form-control bg-secondary text-light border-dark" id="notasCliente" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="btnGuardarCliente">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para ver detalles del Cliente -->
+        <div class="modal fade" id="modalDetalleCliente" tabindex="-1" aria-labelledby="modalDetalleClienteLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="modalDetalleClienteLabel">Detalles del Cliente</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">Información Personal</h6>
+                                <p><strong>Nombre:</strong> <span id="detalle-nombre"></span></p>
+                                <p><strong>Email:</strong> <span id="detalle-email"></span></p>
+                                <p><strong>Teléfono:</strong> <span id="detalle-telefono"></span></p>
+                                <p><strong>RUC/DNI:</strong> <span id="detalle-ruc"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">Dirección</h6>
+                                <p><span id="detalle-direccion"></span></p>
+                                <p><span id="detalle-ciudad"></span>, <span id="detalle-pais"></span></p>
+                                <p><strong>Notas:</strong> <span id="detalle-notas"></span></p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Resumen de estadísticas del cliente -->
+                        <div class="row mb-3 bg-dark text-white p-3 rounded">
+                            <div class="col-md-4 text-center">
+                                <h6>Total Gastado</h6>
+                                <h4 class="text-success" id="totalGastado">$0.00</h4>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h6>Compras Realizadas</h6>
+                                <h4 class="text-info" id="totalCompras">0</h4>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h6>Producto Favorito</h6>
+                                <h4 class="text-warning" id="productoFavorito">Ninguno</h4>
+                            </div>
+                        </div>
+                        
+                        <h6 class="fw-bold">Historial de Compras</h6>
+                        
+                        <!-- Filtros -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label small">Desde</label>
+                                <input type="date" class="form-control form-control-sm" id="filtroFechaDesde">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Hasta</label>
+                                <input type="date" class="form-control form-control-sm" id="filtroFechaHasta">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Producto</label>
+                                <input type="text" class="form-control form-control-sm" id="filtroProducto" placeholder="Buscar producto...">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-primary btn-sm w-100" onclick="aplicarFiltrosHistorial()">Filtrar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped" id="tablaHistorialCompras">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha y Hora</th>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-end">Precio</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los datos se cargarán con JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Paginación -->
+                        <div id="paginacionHistorial" class="mt-3"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" onclick="exportarHistorialCliente(document.getElementById('detalle-nombre').textContent)">
+                            <i class="fas fa-file-excel"></i> Exportar Historial
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" id="btnNuevaVentaCliente">Nueva Venta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de Confirmación para Eliminar -->
+        <div class="modal fade" id="modalConfirmacionEliminar" tabindex="-1" aria-labelledby="modalConfirmacionEliminarLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="modalConfirmacionEliminarLabel">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Estás seguro de que deseas eliminar a este cliente?</p>
+                        <p>Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 border-top border-secondary mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; <script>document.write(new Date().getFullYear())</script> Lextrack.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" 
+    integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="js/date-utils.js"></script>
+    <script src="js/clientes.js"></script>
+</body>
+</html>

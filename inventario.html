@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="description" content="ERP de código libre">
+    <meta name="author" content="Lextrack">
+    <title>Gestión de Inventarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" 
+    integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="img/favicon.ico" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-dark text-white">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fa-solid fa-building me-2"></i>
+                <span>ERP Sistema</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" id="nav-dashboard" aria-current="page" href="index.html">
+                            <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active d-flex align-items-center" id="nav-inventario" aria-current="page" href="inventario.html">
+                            <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" id="nav-clientes" href="clientes.html">
+                            <i class="fa-solid fa-users me-1"></i> Clientes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" id="nav-finanzas" href="finanzas.html">
+                            <i class="fa-solid fa-coins me-1"></i> Finanzas
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-2">
+        <h2 class="text-center mb-4">Gestión de Inventarios</h2>
+
+        <!-- Buscador y filtros -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="buscarProducto" placeholder="Buscar producto por nombre o SKU...">
+                    <button class="btn btn-primary" type="button" id="btnBuscarProducto">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-bordered table-hover" id="tablaInventarios">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Código de barras</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio ($)</th>
+                        <th>Historial de cambios</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los datos se cargarán con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Información de resultados y paginación -->
+        <div class="row mt-1">
+            <div class="col-md-6">
+                <p class="text-white" id="infoResultadosInventario">Mostrando 5 de 0 productos</p>
+            </div>
+            <div class="col-md-6">
+                <div id="paginacionInventario" class="d-flex justify-content-end"></div>
+            </div>
+        </div>
+
+        <!-- Modal de Ingreso con campo de precio -->
+        <div class="modal fade" id="modalIngreso" tabindex="-1" aria-labelledby="modalIngresoLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="modalIngresoLabel">Registrar nuevo producto (entrada)</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formIngreso">
+                            <div class="mb-3">
+                                <label for="nombreProductoIngreso" class="form-label">Nombre del Producto</label>
+                                <input type="text" class="form-control" id="nombreProductoIngreso" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="cantidadIngreso" class="form-label">Cantidad</label>
+                                    <input type="number" class="form-control" id="cantidadIngreso" required min="1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="precioProducto" class="form-label">Precio Unitario ($)</label>
+                                    <input type="number" class="form-control" id="precioProducto" step="0.01" min="0">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="registrarIngreso()">Registrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de Salida -->
+        <div class="modal fade" id="modalSalida" tabindex="-1" aria-labelledby="modalSalidaLabel" aria-hidden="true">
+            <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="modalSalidaLabel">Registrar salida de producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                <form id="formSalida">
+                    <div class="mb-3">
+                        <label for="nombreProductoSalida" class="form-label">Nombre del Producto o SKU</label>
+                        <input type="text" class="form-control" id="nombreProductoSalida" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidadSalida" class="form-label">Cantidad de Salida</label>
+                        <input type="number" class="form-control" id="cantidadSalida" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcionSalida" class="form-label">Descripción de la salida, perdida o merma</label>
+                        <textarea class="form-control" id="descripcionSalida" rows="3"></textarea>
+                    </div>
+                </form>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="registrarSalida()">Registrar</button>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Modal de Ventas -->
+        <div class="modal fade" id="modalVenta" tabindex="-1" aria-labelledby="modalVentaLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="modalVentaLabel">Registrar venta</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formVenta">
+                            <div class="mb-3">
+                                <label for="nombreProductoVenta" class="form-label">Nombre o SKU del Producto</label>
+                                <input type="text" class="form-control" id="nombreProductoVenta" placeholder="Ingresa el nombre o SKU del producto">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="cantidadVenta" class="form-label">Cantidad</label>
+                                    <input type="number" class="form-control" id="cantidadVenta" placeholder="Ingresa la cantidad">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nombreCliente" class="form-label">Nombre del Cliente</label>
+                                <input type="text" class="form-control" id="nombreCliente" placeholder="Nombre del cliente">
+                                <div class="mt-2">
+                                    <a href="clientes.html" class="text-primary" target="_blank">
+                                        <i class="fas fa-external-link-alt"></i> Gestionar clientes
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" onclick="registrarVenta()">Registrar Venta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para ver el historial completo de un producto -->
+        <div class="modal fade" id="modalHistorialProducto" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="modalHistorialLabel">Historial del Producto</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Filtros para el historial -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="filtroTipoHistorial" class="form-label">Tipo de operación</label>
+                                <select class="form-select bg-secondary text-light border-dark" id="filtroTipoHistorial">
+                                    <option value="todos">Todos</option>
+                                    <option value="Entrada">Entradas</option>
+                                    <option value="Salida">Salidas</option>
+                                    <option value="Venta">Ventas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filtroFechaDesdeHistorial" class="form-label">Desde</label>
+                                <input type="date" class="form-control bg-secondary text-light border-dark" id="filtroFechaDesdeHistorial">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filtroFechaHastaHistorial" class="form-label">Hasta</label>
+                                <input type="date" class="form-control bg-secondary text-light border-dark" id="filtroFechaHastaHistorial">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" onclick="aplicarFiltrosHistorial()">Filtrar</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de historial -->
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped" id="tablaHistorialProducto">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha y Hora</th>
+                                        <th>Tipo</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio</th>
+                                        <th>Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los datos se cargarán dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Información de resultados y paginación -->
+                        <div class="row mt-1">
+                            <div class="col-md-6">
+                                <p class="text-muted" id="infoHistorialProducto">Mostrando 10 de 0 registros</p>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="paginacionHistorialProducto" class="d-flex justify-content-end"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-info" onclick="exportarHistorialExcel()">
+                            <i class="fas fa-file-excel"></i> Exportar a Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle w-100 mb-2" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-plus-circle"></i> Registrar Acción
+                    </button>
+                
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <li><a class="dropdown-item" href="#" onclick="agregarProducto()"><i class="fas fa-box"></i> Registrar un nuevo producto</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="salidaProducto()"><i class="fas fa-box-open"></i> Registrar salida/perdida producto</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="abrirModalVenta()"><i class="fas fa-shopping-cart"></i> Registrar una venta</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-primary w-100 mb-2" onclick="exportarAExcel()">
+                    <i class="fas fa-file-excel"></i> Exportar a Excel
+                </button>
+            </div>
+        </div>
+
+    </div>
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 border-top border-secondary mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; <script>document.write(new Date().getFullYear())</script> Lextrack. Para más Información <a href="https://github.com/lextrack" target="_blank" class="text-info"><i class="bi bi-github"></i> GitHub</a>.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = window.location.pathname.split('/').pop();
+            
+            document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
+                link.classList.remove('active');
+                link.removeAttribute('aria-current');
+            });
+            
+            switch(currentPage) {
+                case 'dashboard.html':
+                    document.getElementById('nav-dashboard').classList.add('active');
+                    document.getElementById('nav-dashboard').setAttribute('aria-current', 'page');
+                    break;
+                case 'index.html':
+                    document.getElementById('nav-inventario').classList.add('active');
+                    document.getElementById('nav-inventario').setAttribute('aria-current', 'page');
+                    break;
+                case 'clientes.html':
+                    document.getElementById('nav-clientes').classList.add('active');
+                    document.getElementById('nav-clientes').setAttribute('aria-current', 'page');
+                    break;
+                case 'finanzas.html':
+                    document.getElementById('nav-finanzas').classList.add('active');
+                    document.getElementById('nav-finanzas').setAttribute('aria-current', 'page');
+                    break;
+                default:
+                    document.getElementById('nav-inventario').classList.add('active');
+                    document.getElementById('nav-inventario').setAttribute('aria-current', 'page');
+            }
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" 
+    integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script src="js/date-utils.js"></script>
+    <script src="js/inventario.js"></script>
+</body>
+</html>
