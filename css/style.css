@@ -86,8 +86,26 @@ footer {
     display: none;
 }
 
+#tablaProveedores th:first-child,
+#tablaProveedores td:first-child {
+    display: none;
+}
+
 #btnNuevoGasto{
     margin-bottom: 10px;
+}
+
+.nav-tabs .nav-link {
+    color: #dddddd;
+    border: none;
+    border-radius: 10px 10px 0 0;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #2c3e50;
+    color: white;
+    font-weight: bold;
+    border: none;
 }
 
 .dropdown-toggle {

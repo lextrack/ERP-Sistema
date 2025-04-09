@@ -44,6 +44,11 @@
                             <i class="fa-solid fa-coins me-1"></i> Finanzas
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="proveedores.html">
+                            <i class="fa-solid fa-truck-field me-1"></i> Proveedores
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -73,6 +78,7 @@
                         <th>Producto</th>
                         <th>Cantidad</th>
                         <th>Precio ($)</th>
+                        <th>Proveedor</th>
                         <th>Historial de cambios</th>
                         <th>Acción</th>
                     </tr>
@@ -93,7 +99,6 @@
             </div>
         </div>
 
-        <!-- Modal de Ingreso con campo de precio -->
         <div class="modal fade" id="modalIngreso" tabindex="-1" aria-labelledby="modalIngresoLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content bg-dark text-white">
@@ -105,17 +110,25 @@
                         <form id="formIngreso">
                             <div class="mb-3">
                                 <label for="nombreProductoIngreso" class="form-label">Nombre del Producto</label>
-                                <input type="text" class="form-control" id="nombreProductoIngreso" required>
+                                <input type="text" class="form-control bg-secondary text-light border-dark" id="nombreProductoIngreso" required>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="cantidadIngreso" class="form-label">Cantidad</label>
-                                    <input type="number" class="form-control" id="cantidadIngreso" required min="1">
+                                    <input type="number" class="form-control bg-secondary text-light border-dark" id="cantidadIngreso" required min="1">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="precioProducto" class="form-label">Precio Unitario ($)</label>
-                                    <input type="number" class="form-control" id="precioProducto" step="0.01" min="0">
+                                    <input type="number" class="form-control bg-secondary text-light border-dark" id="precioProducto" step="0.01" min="0">
                                 </div>
+                            </div>
+                            <!-- Nuevo campo de proveedor -->
+                            <div class="mb-3" id="proveedorProductoDiv">
+                                <label for="proveedorProducto" class="form-label">Proveedor</label>
+                                <select class="form-select bg-secondary text-light border-dark" id="proveedorProducto">
+                                    <option value="">Seleccione un proveedor (opcional)</option>
+                                    <!-- Los proveedores se cargarán dinámicamente -->
+                                </select>
                             </div>
                         </form>
                     </div>

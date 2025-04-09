@@ -26,7 +26,7 @@ const CATEGORIAS_GASTO = [
     'Otros Gastos'
 ];
 
-const request = indexedDB.open('erpDB', 4);
+const request = indexedDB.open('erpDB', 5);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;
@@ -35,6 +35,21 @@ request.onupgradeneeded = function(event) {
     if (!db.objectStoreNames.contains(PRODUCTOS_STORE)) {
         const productosStore = db.createObjectStore(PRODUCTOS_STORE, { keyPath: 'id', autoIncrement: true });
         productosStore.createIndex('nombre', 'nombre', { unique: false });
+    }
+
+    if (!db.objectStoreNames.contains('proveedores')) {
+        const proveedoresStore = db.createObjectStore('proveedores', { keyPath: 'id', autoIncrement: true });
+        proveedoresStore.createIndex('nombre', 'nombre', { unique: false });
+        proveedoresStore.createIndex('categoria', 'categoria', { unique: false });
+        proveedoresStore.createIndex('email', 'email', { unique: false });
+    }
+
+    if (!db.objectStoreNames.contains('pedidos')) {
+        const pedidosStore = db.createObjectStore('pedidos', { keyPath: 'id', autoIncrement: true });
+        pedidosStore.createIndex('numero', 'numero', { unique: true });
+        pedidosStore.createIndex('proveedor', 'proveedorId', { unique: false });
+        pedidosStore.createIndex('fecha', 'fecha', { unique: false });
+        pedidosStore.createIndex('estado', 'estado', { unique: false });
     }
     
     if (!db.objectStoreNames.contains(CLIENTES_STORE)) {

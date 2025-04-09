@@ -2,7 +2,7 @@ let db;
 let productosBajoStock = [];
 let actividadReciente = [];
 let chartMovimientos;
-const request = indexedDB.open('erpDB', 4);
+const request = indexedDB.open('erpDB', 5);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;
@@ -16,6 +16,21 @@ request.onupgradeneeded = function(event) {
         const clientesStore = db.createObjectStore('clientes', { keyPath: 'id', autoIncrement: true });
         clientesStore.createIndex('nombre', 'nombre', { unique: false });
         clientesStore.createIndex('email', 'email', { unique: false });
+    }
+
+    if (!db.objectStoreNames.contains('proveedores')) {
+        const proveedoresStore = db.createObjectStore('proveedores', { keyPath: 'id', autoIncrement: true });
+        proveedoresStore.createIndex('nombre', 'nombre', { unique: false });
+        proveedoresStore.createIndex('categoria', 'categoria', { unique: false });
+        proveedoresStore.createIndex('email', 'email', { unique: false });
+    }
+        
+    if (!db.objectStoreNames.contains('pedidos')) {
+        const pedidosStore = db.createObjectStore('pedidos', { keyPath: 'id', autoIncrement: true });
+        pedidosStore.createIndex('numero', 'numero', { unique: true });
+        pedidosStore.createIndex('proveedor', 'proveedorId', { unique: false });
+        pedidosStore.createIndex('fecha', 'fecha', { unique: false });
+        pedidosStore.createIndex('estado', 'estado', { unique: false });
     }
     
     if (!db.objectStoreNames.contains('transacciones')) {

@@ -1,8 +1,9 @@
 const LIMITE_HISTORIAL = 500;
 const PRODUCTOS_STORE = 'productos';
+const PROVEEDORES_STORE = 'proveedores';
 let numeroSecuencial = obtenerNumeroSecuencial();
 let db;
-const request = indexedDB.open('erpDB', 4);
+const request = indexedDB.open('erpDB', 5);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;
@@ -23,12 +24,19 @@ request.onupgradeneeded = function(event) {
         transaccionesStore.createIndex('categoria', 'categoria', { unique: false });
     }
     
-    if (!db.objectStoreNames.contains('facturas')) {
-        const facturasStore = db.createObjectStore('facturas', { keyPath: 'id', autoIncrement: true });
-        facturasStore.createIndex('numero', 'numero', { unique: true });
-        facturasStore.createIndex('cliente', 'cliente', { unique: false });
-        facturasStore.createIndex('fecha', 'fecha', { unique: false });
-        facturasStore.createIndex('estado', 'estado', { unique: false });
+    if (!db.objectStoreNames.contains('proveedores')) {
+        const proveedoresStore = db.createObjectStore('proveedores', { keyPath: 'id', autoIncrement: true });
+        proveedoresStore.createIndex('nombre', 'nombre', { unique: false });
+        proveedoresStore.createIndex('categoria', 'categoria', { unique: false });
+        proveedoresStore.createIndex('email', 'email', { unique: false });
+    }
+    
+    if (!db.objectStoreNames.contains('pedidos')) {
+        const pedidosStore = db.createObjectStore('pedidos', { keyPath: 'id', autoIncrement: true });
+        pedidosStore.createIndex('numero', 'numero', { unique: true });
+        pedidosStore.createIndex('proveedor', 'proveedorId', { unique: false });
+        pedidosStore.createIndex('fecha', 'fecha', { unique: false });
+        pedidosStore.createIndex('estado', 'estado', { unique: false });
     }
 };
 
@@ -92,6 +100,46 @@ document.getElementById('modalVenta').addEventListener('hidden.bs.modal', functi
     formVenta.reset();
 });
 
+function cargarProveedoresParaSelect() {
+    if (!db) {
+        console.warn("Base de datos no inicializada todavía");
+        const proveedorDiv = document.getElementById('proveedorProductoDiv');
+        if (proveedorDiv) proveedorDiv.style.display = 'none';
+        return;
+    }
+
+    if (!db.objectStoreNames.contains('proveedores')) {
+        const proveedorDiv = document.getElementById('proveedorProductoDiv');
+        if (proveedorDiv) proveedorDiv.style.display = 'none';
+        return;
+    }
+    
+    const transaction = db.transaction(['proveedores'], 'readonly');
+    const store = transaction.objectStore('proveedores');
+    const request = store.getAll();
+    
+    request.onsuccess = function(event) {
+        const proveedores = event.target.result;
+        const select = document.getElementById('proveedorProducto');
+        
+        select.innerHTML = '<option value="">Seleccione un proveedor (opcional)</option>';
+        proveedores.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        proveedores.forEach(proveedor => {
+            const option = document.createElement('option');
+            option.value = proveedor.id;
+            option.textContent = proveedor.nombre;
+            select.appendChild(option);
+        });
+        
+        const proveedorDiv = document.getElementById('proveedorProductoDiv');
+        if (proveedorDiv) proveedorDiv.style.display = 'block';
+    };
+    
+    request.onerror = function(event) {
+        console.error('Error al cargar proveedores:', event.target.error);
+    };
+}
 
 function abrirModalVenta() {
     const modal = new bootstrap.Modal(document.getElementById('modalVenta'));
@@ -101,6 +149,16 @@ function abrirModalVenta() {
 function agregarProducto() {
     const modal = new bootstrap.Modal(document.getElementById('modalIngreso'));
     modal.show();
+    
+    try {
+        if (db) {
+            setTimeout(() => cargarProveedoresParaSelect(), 100);
+        }
+    } catch (e) {
+        console.error("Error al cargar proveedores:", e);
+        const proveedorDiv = document.getElementById('proveedorProductoDiv');
+        if (proveedorDiv) proveedorDiv.style.display = 'none';
+    }
 }
 
 function salidaProducto() {
@@ -238,69 +296,133 @@ function registrarIngreso() {
     const nombre = document.getElementById('nombreProductoIngreso').value;
     const cantidad = parseInt(document.getElementById('cantidadIngreso').value);
     const precio = parseFloat(document.getElementById('precioProducto').value) || 0;
+    const proveedorId = document.getElementById('proveedorProducto') ? 
+                        parseInt(document.getElementById('proveedorProducto').value) || null : null;
 
-    if (nombre && cantidad > 0) {
-        const transaction = db.transaction(['productos'], 'readwrite');
-        const store = transaction.objectStore('productos');
-        const request = store.getAll();
+    if (!nombre || cantidad <= 0) {
+        alert("Por favor ingrese un nombre de producto y una cantidad válida.");
+        return;
+    }
 
-        request.onsuccess = function(event) {
-            const productos = event.target.result;
-            const productoExistente = productos.find(p => p.nombre === nombre);
+    if (!proveedorId) {
+        procesarRegistroDeIngreso(nombre, cantidad, precio, null, null);
+        return;
+    }
 
-            if (productoExistente) {
-                productoExistente.cantidad += cantidad;
-                
-                if (precio > 0) {
-                    productoExistente.precio = precio;
+    const transaction = db.transaction(['proveedores'], 'readonly');
+    const proveedoresStore = transaction.objectStore('proveedores');
+    const proveedorRequest = proveedoresStore.get(proveedorId);
+    
+    proveedorRequest.onsuccess = function(event) {
+        const proveedor = event.target.result;
+        if (proveedor) {
+            procesarRegistroDeIngreso(nombre, cantidad, precio, proveedorId, proveedor.nombre);
+        } else {
+            procesarRegistroDeIngreso(nombre, cantidad, precio, proveedorId, null);
+        }
+    };
+    
+    proveedorRequest.onerror = function(event) {
+        console.error('Error al obtener proveedor:', event.target.error);
+        procesarRegistroDeIngreso(nombre, cantidad, precio, null, null);
+    };
+}
+
+function procesarRegistroDeIngreso(nombre, cantidad, precio, proveedorId, proveedorNombre) {
+    const transaction = db.transaction(['productos', 'proveedores'], 'readwrite');
+    const store = transaction.objectStore('productos');
+    const request = store.getAll();
+
+    request.onsuccess = function(event) {
+        const productos = event.target.result;
+        const productoExistente = productos.find(p => p.nombre === nombre);
+        
+        if (proveedorId) {
+            const proveedoresStore = transaction.objectStore('proveedores');
+            const proveedorRequest = proveedoresStore.get(proveedorId);
+            proveedorRequest.onsuccess = function(event) {
+                const proveedor = event.target.result;
+                if (proveedor) {
+                    proveedor.ultimaCompra = new Date();
+                    proveedoresStore.put(proveedor);
                 }
-                
-                if (!productoExistente.historial) {
-                    productoExistente.historial = [];
-                }
-                productoExistente.historial.push({ 
+            };
+        }
+
+        if (productoExistente) {
+            productoExistente.cantidad += cantidad;
+            
+            if (precio > 0) {
+                productoExistente.precio = precio;
+            }
+            
+            if (proveedorId) {
+                productoExistente.proveedorId = proveedorId;
+                productoExistente.proveedorNombre = proveedorNombre;
+            }
+            
+            if (!productoExistente.historial) {
+                productoExistente.historial = [];
+            }
+            
+            const entradaHistorial = { 
+                tipo: 'Entrada', 
+                cantidad, 
+                precio: precio > 0 ? precio : (productoExistente.precio || 0),  
+                fecha: new Date() 
+            };
+            
+            if (proveedorId) {
+                entradaHistorial.proveedorId = proveedorId;
+                entradaHistorial.proveedorNombre = proveedorNombre;
+            }
+            
+            productoExistente.historial.push(entradaHistorial);
+
+            if (productoExistente.historial.length > LIMITE_HISTORIAL) {
+                productoExistente.historial.shift();
+            }
+
+            const updateRequest = store.put(productoExistente);
+            updateRequest.onsuccess = function() {
+                cargarInventarios();
+                console.log('Producto actualizado con la entrada.');
+            };
+        } else {
+            const nuevoProducto = {
+                sku: generarSKU(),
+                nombre,
+                cantidad,
+                precio: precio || 0,
+                historial: [{ 
                     tipo: 'Entrada', 
                     cantidad, 
-                    precio: precio > 0 ? precio : (productoExistente.precio || 0),  
+                    precio,
                     fecha: new Date() 
-                });
-
-                if (productoExistente.historial.length > LIMITE_HISTORIAL) {
-                    productoExistente.historial.shift();
-                }
-
-                const updateRequest = store.put(productoExistente);
-                updateRequest.onsuccess = function() {
-                    cargarInventarios();
-                    console.log('Producto actualizado con la entrada.');
-                };
-            } else {
-                const nuevoProducto = {
-                    sku: generarSKU(),
-                    nombre,
-                    cantidad,
-                    precio: precio || 0,
-                    historial: [{ 
-                        tipo: 'Entrada', 
-                        cantidad, 
-                        precio,
-                        fecha: new Date() 
-                    }]  
-                };
-
-                const addRequest = store.add(nuevoProducto);
-                addRequest.onsuccess = function() {
-                    cargarInventarios();
-                    console.log('Producto agregado con entrada y SKU generado.');
-                };
+                }]
+            };
+            
+            if (proveedorId) {
+                nuevoProducto.proveedorId = proveedorId;
+                nuevoProducto.proveedorNombre = proveedorNombre;
+                nuevoProducto.historial[0].proveedorId = proveedorId;
+                nuevoProducto.historial[0].proveedorNombre = proveedorNombre;
             }
-        };
 
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalIngreso'));
-        modal.hide();
-    } else {
-        alert("Por favor ingrese un nombre de producto y una cantidad válida.");
-    }
+            const addRequest = store.add(nuevoProducto);
+            addRequest.onsuccess = function() {
+                cargarInventarios();
+                console.log('Producto agregado con entrada y SKU generado.');
+            };
+        }
+    };
+
+    request.onerror = function(error) {
+        console.error('Error al buscar productos:', error);
+    };
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalIngreso'));
+    modal.hide();
 }
 
 function registrarSalida() {
@@ -496,6 +618,10 @@ function cargarHistorialProducto(historial, pagina = 1, filtros = {}) {
             
             const celdaDetalles = document.createElement('td');
             let detalles = [];
+
+            if (item.proveedorNombre) {
+                detalles.push(`Proveedor: ${item.proveedorNombre}`);
+            }
             
             if (item.cliente) {
                 detalles.push(`Cliente: ${item.cliente}`);
@@ -640,7 +766,7 @@ function cargarInventarios(filtro = '', pagina = 1) {
         if (productosPaginados.length === 0) {
             const fila = document.createElement('tr');
             const celda = document.createElement('td');
-            celda.colSpan = 7;
+            celda.colSpan = 8; 
             celda.textContent = 'No hay productos en el inventario';
             celda.className = 'text-center';
             fila.appendChild(celda);
@@ -675,6 +801,10 @@ function cargarInventarios(filtro = '', pagina = 1) {
             celdaPrecio.textContent = producto.precio ? `$${producto.precio.toFixed(2)}` : 'No definido';
             celdaPrecio.className = 'text-info';
             fila.appendChild(celdaPrecio);
+            
+            const celdaProveedor = document.createElement('td');
+            celdaProveedor.textContent = producto.proveedorNombre || '-';
+            fila.appendChild(celdaProveedor);
 
             const celdaHistorial = document.createElement('td');
             if (producto.historial && producto.historial.length > 0) {
@@ -683,10 +813,26 @@ function cargarInventarios(filtro = '', pagina = 1) {
                 const historialTexto = historialLimitado
                     .map(entry => {
                         const fechaFormateada = new Date(entry.fecha).toLocaleString();
-                        let clienteTexto = entry.cliente ? ` - Cliente: ${entry.cliente}` : '';
-                        let descripcionTexto = entry.descripcion ? ` - Descripción: ${entry.descripcion}` : ''; 
-                        let precioTexto = entry.precio ? ` - Precio: $${entry.precio.toFixed(2)}` : '';
-                        return `${entry.tipo}: ${entry.cantidad}${clienteTexto}${descripcionTexto}${precioTexto} (${fechaFormateada})`;
+                        
+                        let detallesTexto = '';
+                        
+                        if (entry.proveedorNombre) {
+                            detallesTexto += ` - Prov: ${entry.proveedorNombre}`;
+                        }
+
+                        if (entry.cliente) {
+                            detallesTexto += ` - Cliente: ${entry.cliente}`;
+                        }
+                        
+                        if (entry.descripcion) {
+                            detallesTexto += ` - Descripción: ${entry.descripcion}`;
+                        }
+                        
+                        if (entry.precio) {
+                            detallesTexto += ` - Precio: $${entry.precio.toFixed(2)}`;
+                        }
+                        
+                        return `${entry.tipo}: ${entry.cantidad}${detallesTexto} (${fechaFormateada})`;
                     })
                     .join('<br>');
             

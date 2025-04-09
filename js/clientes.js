@@ -4,7 +4,7 @@ const CLIENTES_STORE = 'clientes';
 const PRODUCTOS_STORE = 'productos';
 const TRANSACCIONES_STORE = 'transacciones';
 const FACTURAS_STORE = 'facturas';
-const request = indexedDB.open('erpDB', 4);
+const request = indexedDB.open('erpDB', 5);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;
@@ -18,6 +18,21 @@ request.onupgradeneeded = function(event) {
         clientesStore.createIndex('nombre', 'nombre', { unique: false });
         clientesStore.createIndex('email', 'email', { unique: false });
     }
+
+    if (!db.objectStoreNames.contains('proveedores')) {
+        const proveedoresStore = db.createObjectStore('proveedores', { keyPath: 'id', autoIncrement: true });
+        proveedoresStore.createIndex('nombre', 'nombre', { unique: false });
+        proveedoresStore.createIndex('categoria', 'categoria', { unique: false });
+        proveedoresStore.createIndex('email', 'email', { unique: false });
+    }
+        
+    if (!db.objectStoreNames.contains('pedidos')) {
+        const pedidosStore = db.createObjectStore('pedidos', { keyPath: 'id', autoIncrement: true });
+        pedidosStore.createIndex('numero', 'numero', { unique: true });
+        pedidosStore.createIndex('proveedor', 'proveedorId', { unique: false });
+        pedidosStore.createIndex('fecha', 'fecha', { unique: false });
+        pedidosStore.createIndex('estado', 'estado', { unique: false });
+    }    
 
     if (!db.objectStoreNames.contains(TRANSACCIONES_STORE)) {
         const transaccionesStore = db.createObjectStore(TRANSACCIONES_STORE, { keyPath: 'id', autoIncrement: true });
@@ -525,7 +540,7 @@ function cargarHistorialCompras(nombreCliente, pagina = 1, filtros = {}) {
             const fila = document.createElement('tr');
             
             const celdaFecha = document.createElement('td');
-            celdaFecha.textContent = compra.fecha.toLocaleString(); // Ver si usar date-utils
+            celdaFecha.textContent = compra.fecha.toLocaleString(); 
             fila.appendChild(celdaFecha);
 
             const celdaProducto = document.createElement('td');
@@ -753,7 +768,6 @@ function actualizarUltimaCompraCliente(clienteId, fechaCompra) {
         };
         
         transaction.oncomplete = function() {
-            // Nada
         };
     });
 }
