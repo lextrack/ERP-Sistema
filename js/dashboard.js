@@ -2,7 +2,7 @@ let db;
 let productosBajoStock = [];
 let actividadReciente = [];
 let chartMovimientos;
-const request = indexedDB.open('erpDB', 5);
+const request = indexedDB.open('erpDB', 1);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;

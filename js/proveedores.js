@@ -18,7 +18,7 @@ const CATEGORIAS_PRODUCTOS = [
     'Servicios',
     'Otros'
 ];
-const request = indexedDB.open('erpDB', 5);
+const request = indexedDB.open('erpDB', 1);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;

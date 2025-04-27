@@ -4,7 +4,7 @@ const CLIENTES_STORE = 'clientes';
 const PRODUCTOS_STORE = 'productos';
 const TRANSACCIONES_STORE = 'transacciones';
 const FACTURAS_STORE = 'facturas';
-const request = indexedDB.open('erpDB', 5);
+const request = indexedDB.open('erpDB', 1);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;

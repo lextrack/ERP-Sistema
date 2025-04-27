@@ -26,7 +26,7 @@ const CATEGORIAS_GASTO = [
     'Otros Gastos'
 ];
 
-const request = indexedDB.open('erpDB', 5);
+const request = indexedDB.open('erpDB', 1);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;
@@ -2033,8 +2033,21 @@ function mostrarFacturas(facturas) {
     facturas.forEach(factura => {
         const fila = document.createElement('tr');
 
+        if (factura.origenInventario) {
+            fila.classList.add('factura-from-inventario');
+            fila.style.borderLeft = '3px solid #0d6efd';
+        }
+
         const celdaNumero = document.createElement('td');
         celdaNumero.textContent = factura.numero;
+
+        if (factura.origenInventario) {
+            const indicador = document.createElement('span');
+            indicador.className = 'badge bg-info ms-2';
+            indicador.title = 'Generada desde Inventario';
+            indicador.textContent = 'INV';
+            celdaNumero.appendChild(indicador);
+        }
         fila.appendChild(celdaNumero);
 
         const celdaFecha = document.createElement('td');
@@ -2137,7 +2150,11 @@ function verFactura(id) {
                 spanEstado.classList.add('bg-danger');
             }
             
-            document.getElementById('verNotasFactura').textContent = factura.notas || 'Sin notas';
+            const notasText = factura.origenInventario ? 
+                `Factura generada automáticamente desde el módulo de Inventario. ${factura.notas || ''}` : 
+                factura.notas || 'Sin notas';
+            
+            document.getElementById('verNotasFactura').textContent = notasText;
             
             const tablaBody = document.querySelector('#tablaVerDetallesFactura');
             tablaBody.innerHTML = '';
@@ -2192,7 +2209,6 @@ function verFactura(id) {
                 btnCambiarEstado.title = 'Marcar esta factura como pagada';
             } else if (factura.estado === 'pagada') {
                 btnCambiarEstado.classList.add('d-none');
-
             } else {
                 btnCambiarEstado.classList.add('d-none');
             }
@@ -2259,7 +2275,7 @@ async function cambiarEstadoFactura() {
         const estadoAnterior = factura.estado;
         
         if (factura.estado === 'pagada') {
-            mostrarNotificacion('Las facturas pagadas no pueden volver a estado pendiente', 'warning');
+            alert('Las facturas pagadas no pueden volver a estado pendiente');
             return;
         }
         
@@ -2271,7 +2287,6 @@ async function cambiarEstadoFactura() {
             
             try {
                 const ingresos = await new Promise((resolve, reject) => {
-
                     const request = transaccionStore.getAll();
                     request.onsuccess = () => {
                         const todasTransacciones = request.result;
@@ -2323,10 +2338,10 @@ async function cambiarEstadoFactura() {
         
         cargarFacturas();
 
-        mostrarNotificacion(`Factura ${factura.numero} cambiada de ${estadoAnterior} a ${factura.estado}`, 'success');
+        alert(`Factura ${factura.numero} cambiada de ${estadoAnterior} a ${factura.estado}`);
     } catch (error) {
         console.error("Error al cambiar estado de factura:", error);
-        mostrarNotificacion("Error al cambiar el estado de la factura", "danger");
+        alert("Error al cambiar el estado de la factura");
     }
 }
 
@@ -2881,4 +2896,30 @@ function inicializarFinanzas() {
     configurarEventos();
     configurarFiltrosReportes();
     inicializarGraficos();
+    
+    const transaction = db.transaction(['facturas'], 'readonly');
+    const store = transaction.objectStore('facturas');
+    const request = store.getAll();
+    
+    request.onsuccess = function(event) {
+        const facturas = event.target.result;
+        const facturasPendientesInventario = facturas.filter(
+            f => f.estado === 'pendiente' && f.origenInventario === true
+        );
+        
+        if (facturasPendientesInventario.length > 0) {
+            setTimeout(() => {
+                alert(`Hay ${facturasPendientesInventario.length} facturas pendientes generadas desde Inventario`);
+                
+                const facturasTab = document.getElementById('facturas-tab');
+                if (facturasTab) {
+                    facturasTab.classList.add('position-relative');
+                    const badge = document.createElement('span');
+                    badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                    badge.textContent = facturasPendientesInventario.length;
+                    facturasTab.appendChild(badge);
+                }
+            }, 1000);
+        }
+    };
 }

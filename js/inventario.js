@@ -3,7 +3,7 @@ const PRODUCTOS_STORE = 'productos';
 const PROVEEDORES_STORE = 'proveedores';
 let numeroSecuencial = obtenerNumeroSecuencial();
 let db;
-const request = indexedDB.open('erpDB', 5);
+const request = indexedDB.open('erpDB', 1);
 
 request.onupgradeneeded = function(event) {
     db = event.target.result;
@@ -174,9 +174,10 @@ function registrarVenta() {
                          parseFloat(document.getElementById('precioVenta').value) : 0;
 
     if (input && cantidad > 0 && nombreCliente) {
-        const transaction = db.transaction(['productos', 'clientes'], 'readwrite');
+        const transaction = db.transaction(['productos', 'clientes', 'facturas'], 'readwrite');
         const productoStore = transaction.objectStore('productos');
         const clienteStore = transaction.objectStore('clientes');
+        const facturaStore = transaction.objectStore('facturas');
         const requestProducto = productoStore.getAll();
 
         requestProducto.onsuccess = function(event) {
@@ -207,12 +208,9 @@ function registrarVenta() {
                         cargarInventarios();
                         console.log('Venta registrada con éxito.');
                         
-                        try {
-                            registrarIngresoDesdeVenta(productoExistente, cantidad, nombreCliente, precio);
-                            actualizarClientePorVenta(nombreCliente);
-                        } catch (e) {
-                            console.log('No se pudo registrar la transacción financiera:', e);
-                        }
+                        actualizarClientePorVenta(nombreCliente);
+                        
+                        generarFacturaPendiente(productoExistente, cantidad, nombreCliente, precio);
                     };
 
                     const modal = bootstrap.Modal.getInstance(document.getElementById('modalVenta'));
@@ -231,6 +229,78 @@ function registrarVenta() {
     } else {
         alert('Por favor complete todos los campos correctamente.');
     }
+}
+
+function generarFacturaPendiente(producto, cantidad, nombreCliente, precio) {
+    const transaction = db.transaction(['clientes', 'facturas'], 'readwrite');
+    const clienteStore = transaction.objectStore('clientes');
+    const facturaStore = transaction.objectStore('facturas');
+    
+    const nombreIndex = clienteStore.index('nombre');
+    const clienteRequest = nombreIndex.getAll(nombreCliente);
+    
+    clienteRequest.onsuccess = function(event) {
+        let clienteId = null;
+        const clientes = event.target.result;
+        
+        if (clientes && clientes.length > 0) {
+            clienteId = clientes[0].id;
+        }
+        
+        const fecha = new Date();
+        const anio = fecha.getFullYear().toString().substr(-2);
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        const prefijo = `F${anio}${mes}-`;
+        
+        const requestFacturas = facturaStore.getAll();
+        requestFacturas.onsuccess = function(event) {
+            const facturas = event.target.result;
+            let maxNumero = 0;
+            
+            facturas.forEach(factura => {
+                if (factura.numero && factura.numero.startsWith(prefijo)) {
+                    const numParte = factura.numero.substring(prefijo.length);
+                    const num = parseInt(numParte);
+                    if (!isNaN(num) && num > maxNumero) {
+                        maxNumero = num;
+                    }
+                }
+            });
+            
+            const siguienteNumero = (maxNumero + 1).toString().padStart(3, '0');
+            const numeroFactura = `${prefijo}${siguienteNumero}`;
+            
+            const factura = {
+                numero: numeroFactura,
+                fecha: new Date(),
+                clienteId: clienteId,
+                clienteNombre: nombreCliente,
+                estado: 'pendiente',
+                detalles: [{
+                    productoId: producto.id,
+                    productoNombre: producto.nombre,
+                    cantidad: cantidad,
+                    precio: precio,
+                    subtotal: precio * cantidad
+                }],
+                total: precio * cantidad,
+                notas: `Factura generada automáticamente desde venta en Inventario`,
+                origenInventario: true, 
+                fechaCreacion: new Date()
+            };
+            
+            const addFacturaRequest = facturaStore.add(factura);
+            
+            addFacturaRequest.onsuccess = function() {
+                console.log('Factura pendiente generada con éxito:', numeroFactura);
+                alert(`Se ha generado la factura ${numeroFactura} en estado pendiente.`);
+            };
+            
+            addFacturaRequest.onerror = function(e) {
+                console.error('Error al generar factura pendiente:', e);
+            };
+        };
+    };
 }
 
 function actualizarClientePorVenta(nombreCliente) {
