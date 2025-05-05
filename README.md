@@ -140,21 +140,6 @@ El sistema es compatible con navegadores modernos que soporten:
 - No existe autenticación de usuarios
 - La capacidad de almacenamiento depende del navegador
 
-## Recomendaciones
-
-Para un uso óptimo:
-- Utiliza un navegador actualizado (Chrome, Firefox, Edge)
-- Evita el modo incógnito (para mantener datos persistentes)
-- Realiza copias de seguridad periódicas exportando datos
-- No borres la caché del navegador sin exportar los datos primero
-
-## Próximas mejoras
-
-- Añadir sistema de respaldo/restauración de la base de datos
-- Implementar roles de usuario y autenticación
-- Añadir temas visuales (claro/oscuro)
-- Desarrollar una versión con sincronización en la nube
-
 ## Licencia
 
 Este proyecto tiene licencia MIT.
